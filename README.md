@@ -10,9 +10,12 @@ aldonos produces iCalendar files in a directory (set in $HOME/.config/estonta.co
 lerta displays a list of events in the directory. You can filter them by category; or find an event by date. It's VERY basic.
 
 ## Installation
+
+```
 sudo install -p -D aldonos -m 0755 /usr/local/bin/aldonos
 sudo install -p -D lerta -m 0755 /usr/local/bin/lerta
 install -p -D estonta.conf -m 0644 $HOME/.config/estronta.conf
+```
 
 Then use your favourite text editor to edit **estronta.conf**.
 

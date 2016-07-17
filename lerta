@@ -15,7 +15,6 @@ find_appointments(){
 needle="$(date -d "$DATEFILE" -Idate)"
 for found in $(grep -lr --include '*.ics' $needle $eventpath);
 do
-[ "$(ls -A $eventpath)" ] && continue
 list_appointment
 done
 }
@@ -24,11 +23,9 @@ list_appointment(){
 	tail -n +5 $found > $LERTA
 	while read g
 	do
-	[ "$(ls -A $eventpath)" ] && continue
 		IFS=':' read -r calname string <<< "$g"
 				printf -v $calname "$string"
 	done < $LERTA
-
 	echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY // $LOCATION
 	$DESCRIPTION";
 }

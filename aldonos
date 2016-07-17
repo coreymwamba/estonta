@@ -1,0 +1,75 @@
+#! /bin/bash
+# aldonos - simple appointment adding
+# Corey Mwamba 2014, 2016
+
+source $HOME/.config/estonta.conf
+join_strings() { 
+	 local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}";
+	}
+
+show_help(){
+cat <<'HelpText123'
+aldonos: add events, using a graphical dialog interface (yad). 
+	-h,-?,--help	Show this help.
+HelpText123
+}
+
+case $1 in
+-h|-\?|--help)
+show_help
+exit 0
+;;
+
+
+
+*)
+dtd=$(yad --title="start date" --text="When is it?" --calendar --date-format="%Y-%m-%d") || exit 1
+[[ -z "$dtd" ]] && exit 0
+dtt=$(yad --title="start time" --text="enter the start time (24hr format)" --entry ) || exit 1
+sdt=`echo $dtd" "$dtt`
+dtstart=`date -Iminutes -d "$sdt" | sed '1 i\ DTSTART:'`
+loc=$(yad --title="location" --text="where is it?" --form --field="Name" --field="Address" --field="City" --field="Postcode" --field="Country") || exit 1
+place=$(echo $loc | awk -F '|' '{print $1}')
+street=$(echo $loc | awk -F '|' '{print $2}')
+city=$(echo $loc | awk -F '|' '{print $3}')
+[[ -z "$city" ]] && city=$HOMETOWN
+postc=$(echo $loc | awk -F '|' '{print $4}')
+country=$(echo $loc | awk -F '|' '{print $5}')
+[[ -z "$country" ]] && country=$HOMECOUNTRY
+location="LOCATION:$(join_strings ', ' "$place" "$street" "$city" "$postc" "$country")"
+group="--field group?:CBE"
+title="--field title"
+gp=$(join_strings '!' ${TAGS[@]})
+main=$(yad --form $group $title $gp) || exit 1
+summary=$(echo $main | awk -F '|' '{print $2}')
+category=$(echo $main | awk -F '|' '{print $1}')
+desc=$(yad --text="Write a description or more information" --text-info --editable --wrap) || exit 1
+
+vcst="BEGIN:VCALENDAR"
+vcv="VERSION:2.0"
+vcp="PRODID:-//Estonta/ical//NONSGML v1.0//EN"
+vcuid="UID:$(date -Iminutes -d "$sdt" | tr -d ':')@$(hostname)"
+vevst="BEGIN:VEVENT"
+veven="END:VEVENT"
+	newfile="$eventpath/$(date -Iminutes -d "$sdt" | tr -d ':').ics"
+	if [ -f $newfile ]
+	then 
+		uhoh=$(yad --text="You have something on this day at that time already...")
+		exit $uhoh
+	fi
+	touch $newfile
+echo $vcst >> $newfile
+echo $vcuid >> $newfile
+echo $vcv >> $newfile
+echo $vcp >> $newfile
+echo $vevst >> $newfile
+echo $location >> $newfile
+echo $dtstart >> $newfile
+echo "SUMMARY:$summary" >> $newfile
+echo "CATEGORIES:$category" >> $newfile
+echo -e "DESCRIPTION:$desc"|awk '{printf "%s\\n\\n",$0} END {print ""}' >> $newfile
+echo $veven >> $newfile
+echo "END:VCALENDAR" >> $newfile
+exit 0
+;;
+esac

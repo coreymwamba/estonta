@@ -1,0 +1,143 @@
+#! /bin/bash
+# lerta - appointment listing script
+# Corey Mwamba, 2016
+source $HOME/.config/estonta.conf
+
+if [[ ! -s $eventpath ]]; then
+mkdir -p $eventpath
+echo "New directory created at $eventpath."
+exit 0
+fi
+
+
+find_appointments(){
+		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+needle="$(date -d "$DATEFILE" -Idate)"
+for found in $(grep -lr --include '*.ics' $needle $eventpath);
+do
+[ "$(ls -A $eventpath)" ] && continue
+list_appointment
+done
+}
+list_appointment(){
+		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	tail -n +5 $found > $LERTA
+	while read g
+	do
+	[ "$(ls -A $eventpath)" ] && continue
+		IFS=':' read -r calname string <<< "$g"
+				printf -v $calname "$string"
+	done < $LERTA
+
+	echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY // $LOCATION
+	$DESCRIPTION";
+}
+list_all(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+for file in $eventpath/*.ics;
+do
+
+	tail -n +5 $file > $LERTA
+	while read line
+	do
+		IFS=':' read -r calname string <<< "$line"
+		printf -v $calname "$string"
+	done < $LERTA
+	echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY";
+done
+}
+
+list_by_cat(){
+		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+for file in $eventpath/*.ics;
+do
+	tail -n +5 $file > $LERTA
+	while read line
+	do
+		IFS=':' read -r calname string <<< "$line"
+		printf -v $calname "$string"
+	done < $LERTA
+	if [ $CATEGORIES == $FILTER ];
+	then
+		echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY";
+	fi
+done	
+	
+}
+
+show_help() {
+cat <<'HelpText123'
+lerta: list events. 
+	no switches		List all saved events; 
+				OR (if run for first time) create directory to save events. 
+				Edit ~/.config/estonta.conf
+				to change the directory.
+	
+	-c --category=TEXT	List all saved events filtered by category.
+	
+	-d,--date=DATE_STRING	Find events matching the date string.
+				DATE_STRING is a any value accepted by	
+				date(1) function.
+	
+	-h,-?,--help	Show this help.
+HelpText123
+}
+
+
+case $1 in
+-h|-\?|--help)
+show_help
+exit 0
+;;
+-c)
+if [ -n "$2" ];
+	then
+		FILTER=$2
+		shift
+		list_by_cat
+		exit 0
+	else
+		printf 'ERROR: you need to enter a category.\n' >&2
+		exit 1
+fi
+;;
+--category=?*)
+FILTER=${1#*=}
+if [ -n $FILTER ]; 
+	then
+		list_by_cat
+		exit 0
+	else
+		printf 'ERROR:  you need to enter a category.\n' >&2
+		exit 1
+fi
+;;
+-d)
+if [ -n "$2" ];
+	then
+		DATEFILE=$2
+		shift
+		find_appointments
+		exit 0
+	else
+		printf 'ERROR: you need to enter a date string.\n' >&2
+		exit 1
+fi
+;;
+--date=?*)
+DATEFILE=${1#*=}
+if [ -n $DATEFILE ]; 
+	then
+		find_appointments
+		exit 0
+	else
+		printf 'ERROR: you need to enter a date string.\n' >&2
+		exit 1
+fi
+;;
+*)
+list_all
+exit 0
+;;
+esac
+rm $LERTA

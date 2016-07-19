@@ -30,7 +30,7 @@ $ lerta
 New directory created at /home/corey/.local/share/ics.
 No events found
 ```
-Then run **aldonos** to add an event. A series of dialogs will guide you through adding an event. An iCalendar file is added to the directory.
+Then run **aldonos** to add an event. A series of questions (or with the **-g**, Yad dialogs) will guide you through adding an event. An iCalendar file is added to the directory.
 
 ![The series of dialogs for aldonos](aldonas.png)
 

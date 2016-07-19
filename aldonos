@@ -20,23 +20,28 @@ show_help
 exit 0
 ;;
 
-
-
 *)
 dtd=$(yad --title="start date" --text="When is it?" --calendar --date-format="%Y-%m-%d") || exit 1
 [[ -z "$dtd" ]] && exit 0
-dtt=$(yad --title="start time" --text="enter the start time (24hr format)" --entry ) || exit 1
-sdt=`echo $dtd" "$dtt`
-dtstart=`date -Iminutes -d "$sdt" | sed '1 i\ DTSTART:'`
+dtt=$(yad --title="start time" --text="enter the start time" --entry ) || exit 1
+sdt="$dtd $dtt"
+dtstart=$(date -d "$sdt" +"%Y%m%dT%H%M%SZ")
+
 loc=$(yad --title="location" --text="where is it?" --form --field="Name" --field="Address" --field="City" --field="Postcode" --field="Country") || exit 1
+loc_array=()
 place=$(echo $loc | awk -F '|' '{print $1}')
+[[ -n "$place" ]] && loc_array+=( "$place" )
 street=$(echo $loc | awk -F '|' '{print $2}')
+[[ -n "$street" ]] && loc_array+=( "$street" )
 city=$(echo $loc | awk -F '|' '{print $3}')
 [[ -z "$city" ]] && city=$HOMETOWN
+[[ -n "$city" ]] && loc_array+=( "$city" )
 postc=$(echo $loc | awk -F '|' '{print $4}')
+[[ -n "$postc" ]] && loc_array+=( "$postc" )
 country=$(echo $loc | awk -F '|' '{print $5}')
 [[ -z "$country" ]] && country=$HOMECOUNTRY
-location="LOCATION:$(join_strings ', ' "$place" "$street" "$city" "$postc" "$country")"
+[[ -n "$country" ]] && loc_array+=( "$country" )
+location=$(printf "%s\, " "${loc_array[@]}" | sed -e 's/\(.*\)\\,/\1/')
 group="--field group?:CBE"
 title="--field title"
 gp=$(join_strings '!' ${TAGS[@]})
@@ -49,9 +54,11 @@ vcst="BEGIN:VCALENDAR"
 vcv="VERSION:2.0"
 vcp="PRODID:-//Estonta/ical//NONSGML v1.0//EN"
 vcuid="UID:$(date -Iminutes -d "$sdt" | tr -d ':')@$(hostname)"
+dtstamp="DTSTAMP:$(date +"%Y%m%dT%H%M%SZ")"
 vevst="BEGIN:VEVENT"
 veven="END:VEVENT"
 	newfile="$eventpath/$(date -Iminutes -d "$sdt" | tr -d ':').ics"
+	# simple anti-clash mechanism
 	if [ -f $newfile ]
 	then 
 		uhoh=$(yad --text="You have something on this day at that time already...")
@@ -59,16 +66,17 @@ veven="END:VEVENT"
 	fi
 	touch $newfile
 echo $vcst >> $newfile
-echo $vcuid >> $newfile
 echo $vcv >> $newfile
 echo $vcp >> $newfile
 echo $vevst >> $newfile
-echo $location >> $newfile
-echo $dtstart >> $newfile
-echo "SUMMARY:$summary" >> $newfile
-echo "CATEGORIES:$category" >> $newfile
-echo -e "DESCRIPTION:$desc"|awk '{printf "%s\\n\\n",$0} END {print ""}' >> $newfile
-echo $veven >> $newfile
+echo $vcuid >> $newfile
+echo $dtstamp >> $newfile
+echo "DTSTART:$dtstart" >> $newfile
+[[ -n "$location" ]] && echo "LOCATION:${location}" >> $newfile
+[[ -n "$summary" ]] && echo "SUMMARY:$summary" >> $newfile
+[[ -n "$category" ]] && echo "CATEGORIES:$category" >> $newfile
+[[ -n "$desc" ]] && echo "DESCRIPTION:$desc" |tr '\n' '\t'| awk '{gsub(/\,/,"\\,",$0)} {gsub(/\;/, "\\;",$0)} {gsub(/\t/,"\\n",$0) } {print $0}' | fold -b -w 75  >> $newfile
+echo -e $veven >> $newfile
 echo "END:VCALENDAR" >> $newfile
 exit 0
 ;;

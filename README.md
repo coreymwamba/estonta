@@ -23,7 +23,27 @@ install -p -D estonta.conf -m 0644 $HOME/.config/estronta.conf
 
 Then use your favourite text editor to edit **estronta.conf**.
 
+## Use
+First, run **lerta**.
+```
+$ lerta
+New directory created at /home/corey/.local/share/ics.
+No events found
+```
+Then run **aldonos** to add an event. A series of dialogs will guide you through adding an event. An iCalendar file is added to the directory.
+
+You can then list the event with **lerta**. If you want to display an event on a certain day, use the **-d** switch: this takes a date string (in quotes) as detailed in the manpage for date(1).
+```
+$ lerta -d "Friday"
+22 Jul '16 @ 14:00 - Picnic
+Normanton Park, Derby, United Kingdom
+Bring a blanket!
+
+No alcohol on the park
+```
+The **-c** switch filters events by category.
+
 ## Why?
-I got sick--thoroughly sick--of not having a transparent way of making events on my laptop. By transparent I mean making an event that I can then send to something else (like a phone; or my site) without a conversion step. I also needed something that would give me a plain list of events that I could use in Conky.
+I got sick--thoroughly sick--of not having a straightforward, transparent way of making events on my laptop. By transparent I mean making an event that I can then send to something else (like a phone; or my site) without a conversion step or a binary program. I also needed something that would give me a plain list of events that I could use in Conky. 
 
 

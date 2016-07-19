@@ -44,8 +44,13 @@ Bring a blanket!
 No alcohol on the park
 ```
 The **-c** switch filters events by category.
+```
+lerta -c "study"
+19 Jul '16 @ 15:00 - Thermodynamics tutorial
+```
+You can edit and delete events by editing the ics files. You can also add events from other software by exporting them into the configured directory.
 
 ## Why?
-I got sick--thoroughly sick--of not having a straightforward, transparent way of making events on my laptop. By transparent I mean making an event that I can then send to something else (like a phone; or my site) without a conversion step or a binary program. I also needed something that would give me a plain list of events that I could use in Conky. 
+I got sick of not having a straightforward, transparent way of making events on my laptop. By transparent I mean making an event that I can then send to something else (like a phone; or my site) without a conversion step or a binary program. I also needed something that would give me a plain list of events that I could use in Conky. I didn't want anything big, like a full calendaring application; just something I could look at quickly, and also add to if needed.
 
 

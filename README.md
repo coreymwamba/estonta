@@ -3,6 +3,10 @@ A simple Bash and [Yad](https://sourceforge.net/projects/yad-dialog/)-based appo
 
 It has two scripts: **aldonos** (add an event, using Yad) and **lerta** (list events, in a shell).
 
+
+![clockwise, from top-left: lerta (in Termite), lerta in Conky, estonta.conf, aldonos](estonta/estonta.png)
+
+
 ## aldonos
 aldonos produces iCalendar files in a directory (set in $HOME/.config/estonta.conf).
 

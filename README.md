@@ -18,10 +18,10 @@ lerta displays a list of events in the directory. You can filter them by categor
 ```
 sudo install -p -D aldonos -m 0755 /usr/local/bin/aldonos
 sudo install -p -D lerta -m 0755 /usr/local/bin/lerta
-install -p -D estonta.conf -m 0644 $HOME/.config/estronta.conf
+install -p -D estonta.conf -m 0644 $HOME/.config/estonta.conf
 ```
 
-Then use your favourite text editor to edit **estronta.conf**.
+Then use your favourite text editor to edit **estonta.conf**.
 
 ## Use
 First, run **lerta**.

@@ -7,6 +7,51 @@ join_strings() {
 	 local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}";
 	}
 
+shell_generate_ical(){
+	newfile="$eventpath/$(date -Iminutes -d "$sdt" | tr -d ':').ics"
+	# simple anti-clash mechanism
+	if [ -f $newfile ]
+	then 
+		echo "You have something on this day at that time already..."
+		lerta
+		exit 1
+	fi
+	touch $newfile
+}
+yad_generate_ical(){
+	newfile="$eventpath/$(date -Iminutes -d "$sdt" | tr -d ':').ics"
+	# simple anti-clash mechanism
+	if [ -f $newfile ]
+	then 
+		uhoh=$(yad --text="You have something on this day at that time already...")
+		exit 1
+	fi
+	touch $newfile
+}
+
+populate_ical() {
+vcst="BEGIN:VCALENDAR"
+vcv="VERSION:2.0"
+vcp="PRODID:-//Estonta/ical//NONSGML v1.0//EN"
+vcuid="UID:$(date -Iminutes -d "$sdt" | tr -d ':')@$(hostname)"
+dtstamp="DTSTAMP:$(date +"%Y%m%dT%H%M%SZ")"
+vevst="BEGIN:VEVENT"
+veven="END:VEVENT"
+echo $vcst >> $newfile
+echo $vcv >> $newfile
+echo $vcp >> $newfile
+echo $vevst >> $newfile
+echo $vcuid >> $newfile
+echo $dtstamp >> $newfile
+echo "DTSTART:$dtstart" >> $newfile
+[[ -n "$location" ]] && echo "LOCATION:${location}" >> $newfile
+[[ -n "$summary" ]] && echo "SUMMARY:$summary" >> $newfile
+[[ -n "$category" ]] && echo "CATEGORIES:$category" >> $newfile
+[[ -n "$desc" ]] && echo "DESCRIPTION:$desc" |tr '\n' '\t'| awk '{gsub(/\,/,"\\,",$0)} {gsub(/\;/, "\\;",$0)} {gsub(/\t/,"\\n",$0) } {print $0}' | fold -b -w 75  >> $newfile
+echo -e $veven >> $newfile
+echo "END:VCALENDAR" >> $newfile
+}
+
 show_help(){
 cat <<'HelpText123'
 aldonos: add events, using a graphical dialog interface (yad). 
@@ -19,8 +64,7 @@ case $1 in
 show_help
 exit 0
 ;;
-
-*)
+-g)
 dtd=$(yad --title="start date" --text="When is it?" --calendar --date-format="%Y-%m-%d") || exit 1
 [[ -z "$dtd" ]] && exit 0
 dtt=$(yad --title="start time" --text="enter the start time" --entry ) || exit 1
@@ -42,42 +86,40 @@ country=$(echo $loc | awk -F '|' '{print $5}')
 [[ -z "$country" ]] && country=$HOMECOUNTRY
 [[ -n "$country" ]] && loc_array+=( "$country" )
 location=$(printf "%s\, " "${loc_array[@]}" | sed -e 's/\(.*\)\\,/\1/')
-group="--field group?:CBE"
+group="--field tag?:CBE"
 title="--field title"
 gp=$(join_strings '!' ${TAGS[@]})
 main=$(yad --form $group $title $gp) || exit 1
 summary=$(echo $main | awk -F '|' '{print $2}')
 category=$(echo $main | awk -F '|' '{print $1}')
 desc=$(yad --text="Write a description or more information" --text-info --editable --wrap) || exit 1
-
-vcst="BEGIN:VCALENDAR"
-vcv="VERSION:2.0"
-vcp="PRODID:-//Estonta/ical//NONSGML v1.0//EN"
-vcuid="UID:$(date -Iminutes -d "$sdt" | tr -d ':')@$(hostname)"
-dtstamp="DTSTAMP:$(date +"%Y%m%dT%H%M%SZ")"
-vevst="BEGIN:VEVENT"
-veven="END:VEVENT"
-	newfile="$eventpath/$(date -Iminutes -d "$sdt" | tr -d ':').ics"
-	# simple anti-clash mechanism
-	if [ -f $newfile ]
-	then 
-		uhoh=$(yad --text="You have something on this day at that time already...")
-		exit $uhoh
-	fi
-	touch $newfile
-echo $vcst >> $newfile
-echo $vcv >> $newfile
-echo $vcp >> $newfile
-echo $vevst >> $newfile
-echo $vcuid >> $newfile
-echo $dtstamp >> $newfile
-echo "DTSTART:$dtstart" >> $newfile
-[[ -n "$location" ]] && echo "LOCATION:${location}" >> $newfile
-[[ -n "$summary" ]] && echo "SUMMARY:$summary" >> $newfile
-[[ -n "$category" ]] && echo "CATEGORIES:$category" >> $newfile
-[[ -n "$desc" ]] && echo "DESCRIPTION:$desc" |tr '\n' '\t'| awk '{gsub(/\,/,"\\,",$0)} {gsub(/\;/, "\\;",$0)} {gsub(/\t/,"\\n",$0) } {print $0}' | fold -b -w 75  >> $newfile
-echo -e $veven >> $newfile
-echo "END:VCALENDAR" >> $newfile
+yad_generate_ical
+populate_ical
+thanks=$(yad --text="Event saved")
 exit 0
 ;;
+*)
+echo "What date is the event (date: use DATESTRING format - no commas!)? "
+read dat
+dtd=$(date -d "$dat" +"%Y-%m-%d")
+echo "Enter the start time: "
+read dtt
+sdt="$dtd $dtt"
+dtstart=$(date -d "$sdt" +"%Y%m%dT%H%M%SZ")
+echo "Where is it (press Enter to skip)?"
+read location
+location=${location//,/\,}
+echo "Please give the event a title (press Enter to skip):"
+read summary
+echo "any tags (press Enter to skip)?"
+read category
+tags=${category//,/\,}
+echo "Write a short description (press Enter to skip): "
+read desc
+shell_generate_ical
+populate_ical
+echo "Event saved."
+exit 0
+;;
+
 esac

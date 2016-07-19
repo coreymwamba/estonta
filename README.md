@@ -4,7 +4,7 @@ A simple Bash and [Yad](https://sourceforge.net/projects/yad-dialog/)-based appo
 It has two scripts: **aldonos** (add an event, using Yad) and **lerta** (list events, in a shell).
 
 
-![clockwise, from top-left: lerta (in Termite), lerta in Conky, estonta.conf, aldonos](estonta/estonta.png)
+![clockwise, from top-left: lerta (in Termite), lerta in Conky, estonta.conf, aldonos](estonta.png)
 
 
 ## aldonos

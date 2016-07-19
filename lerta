@@ -10,32 +10,39 @@ generate_fields(){
 	done < $LERTA
 	#iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
 	DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'|sed -e 's/.\{16\}/&:/')
+    THEDATE=$(date -d $DTSTART +"$DATEFORMAT")
 }
 find_appointments(){
-		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 needle="$(date -d "$DATEFILE" -Idate)"
 for found in $(grep -lr --include '*.ics' $needle $eventpath);
 do
-[[ -n "$short" ]] && list_summary
-[[ -z "$short" ]] && list_appointment
+list_appointment
 done
 }
+
+date_range(){
+	# SO - http://stackoverflow.com/questions/28226229/bash-looping-through-dates
+startdate=$(date -I -d "$startdate") ||  exit -1 
+enddate=$(date -I -d "$enddate")   || exit -1 
+DATEFILE="$startdate"
+while [ "$(date -d "$DATEFILE" +%Y%m%d)" -lt "$(date -d "$enddate" +%Y%m%d)" ]; 
+	do
+	short="1"
+find_appointments
+  DATEFILE=$(date -I -d "$DATEFILE + 1 day")
+done
+}
+
 list_appointment(){
 		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 	tail -n +5 $found > $LERTA
 generate_fields
-		echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
-		echo -e "$LOCATION"
+		echo -e "$THEDATE - $SUMMARY"
+[[ -z "$SHORTNESS" ]] && echo -e "$LOCATION"
 		fulltext=${DESCRIPTION//\n\n/\\n\\n}
 		fulltext=${fulltext//(\\n)/\\n\\n}
-		echo -e ${fulltext%\n}
-}
-
-list_summary(){
-		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
-	tail -n +5 $found > $LERTA
-generate_fields
-		echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
+[[ -z "$SHORTNESS" ]] && echo -e ${fulltext%\n}
 }
 
 list_all(){
@@ -59,22 +66,8 @@ generate_fields
 		echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY";
 	fi
 done	
+	
 }
-
-date_range(){
-	# SO - http://stackoverflow.com/questions/28226229/bash-looping-through-dates
-startdate=$(date -I -d "$startdate") ||  exit -1 
-enddate=$(date -I -d "$enddate")   || exit -1 
-DATEFILE="$startdate"
-while [ "$(date -d "$DATEFILE" +%Y%m%d)" -lt "$(date -d "$enddate" +%Y%m%d)" ]; 
-	do
-find_appointments
-  DATEFILE=$(date -I -d "$DATEFILE + 1 day")
-done
-}
-
-
-
 
 show_help() {
 cat <<'HelpText123'
@@ -100,6 +93,7 @@ case $1 in
 show_help
 exit 0
 ;;
+
 -c)
 if [ -n "$2" ];
 	then
@@ -135,6 +129,7 @@ if [ -n "$2" ];
 		exit 1
 fi
 ;;
+
 --date=?*)
 DATEFILE=${1#*=}
 if [ -n $DATEFILE ]; 
@@ -146,6 +141,16 @@ if [ -n $DATEFILE ];
 		exit 1
 fi
 ;;
+
+-r)
+startdate=$1
+shift
+enddate=$2
+shift
+date_range
+exit 0
+;;
+
 *)
 if [[ ! -s $eventpath ]]; then
 mkdir -p $eventpath

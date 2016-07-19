@@ -66,6 +66,14 @@ The **-c** switch filters events by category.
 lerta -c "study"
 19 Jul '16 @ 15:00 - Thermodynamics tutorial
 ```
+You can find events within a date range with **lerta -r "startdate" "enddate"**. You could alias this:
+
+```
+$ alias next7days='lerta -r "now" "+7days"'
+$ next7days 
+20 Jul '16 @ 19:00 - Hitting the clubs
+20 Jul '16 @ 17:00 - Relaxing
+```
 You can edit and delete events by editing the ics files. You can also add events from other software by exporting them into the configured directory.
 
 ### with Conky

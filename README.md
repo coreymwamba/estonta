@@ -61,6 +61,13 @@ Bring a blanket!
 
 No alcohol on the park
 ```
+#### A note on date strings
+Date strings are handy: they're "human readable". However, they're not calculated by humans. So bear in mind...
+* "next Thursday" means "Thursday coming" and NOT "Thursday, next week". For Thursday, next week use "next week Thursday"; and
+* don't use commas.
+
+
+
 The **-c** switch filters events by category.
 ```
 lerta -c "study"

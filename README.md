@@ -34,6 +34,24 @@ Then run **aldonos** to add an event. A series of questions (or with the **-g**,
 
 ![The series of dialogs for aldonos](aldonas.png)
 
+Here's an example from a terminal
+```
+$ aldonos
+*What date is the event (date: use DATESTRING format - no commas!)? *
+20 Jul
+*Enter the start time: *
+7pm
+*Where is it (Press Enter to skip)? *
+Out!
+*Please give the event a title  (Press Enter to skip):*
+Hitting the clubs
+*any tags  (Press Enter to skip)?*
+
+*Write a short description (Press Enter to skip): *
+Yes!
+Event saved.
+```
+
 You can then list the event with **lerta**. If you want to display an event on a certain day, use the **-d** switch: this takes a date string (in quotes) as detailed in the manpage for date(1).
 ```
 $ lerta -d "Friday"

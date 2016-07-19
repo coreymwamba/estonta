@@ -54,7 +54,8 @@ echo "END:VCALENDAR" >> $newfile
 
 show_help(){
 cat <<'HelpText123'
-aldonos: add events, using a graphical dialog interface (yad). 
+aldonos: add events.
+	-g		use a graphical dialog interface (yad)
 	-h,-?,--help	Show this help.
 HelpText123
 }

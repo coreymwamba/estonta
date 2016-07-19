@@ -26,14 +26,17 @@ list_appointment(){
 		IFS=':' read -r calname string <<< "$g"
 				printf -v $calname "$string"
 	done < $LERTA
-	echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY // $LOCATION
-	$DESCRIPTION";
+		echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
+		echo -e "$LOCATION"
+		fulltext=${DESCRIPTION//\n\n/\\n\\n}
+		fulltext=${fulltext//(\\n)/\\n\\n}
+		echo -e ${fulltext%\n}
+	
 }
 list_all(){
 	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 for file in $eventpath/*.ics;
 do
-
 	tail -n +5 $file > $LERTA
 	while read line
 	do

@@ -32,6 +32,8 @@ No events found
 ```
 Then run **aldonos** to add an event. A series of dialogs will guide you through adding an event. An iCalendar file is added to the directory.
 
+![The series of dialogs for aldonos](aldonas.png)
+
 You can then list the event with **lerta**. If you want to display an event on a certain day, use the **-d** switch: this takes a date string (in quotes) as detailed in the manpage for date(1).
 ```
 $ lerta -d "Friday"

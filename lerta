@@ -16,7 +16,8 @@ find_appointments(){
 needle="$(date -d "$DATEFILE" -Idate)"
 for found in $(grep -lr --include '*.ics' $needle $eventpath);
 do
-list_appointment
+[[ -n "$short" ]] && list_summary
+[[ -z "$short" ]] && list_appointment
 done
 }
 list_appointment(){
@@ -28,6 +29,13 @@ generate_fields
 		fulltext=${DESCRIPTION//\n\n/\\n\\n}
 		fulltext=${fulltext//(\\n)/\\n\\n}
 		echo -e ${fulltext%\n}
+}
+
+list_summary(){
+		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	tail -n +5 $found > $LERTA
+generate_fields
+		echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
 }
 
 list_all(){
@@ -51,8 +59,22 @@ generate_fields
 		echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY";
 	fi
 done	
-	
 }
+
+date_range(){
+	# SO - http://stackoverflow.com/questions/28226229/bash-looping-through-dates
+startdate=$(date -I -d "$startdate") ||  exit -1 
+enddate=$(date -I -d "$enddate")   || exit -1 
+DATEFILE="$startdate"
+while [ "$(date -d "$DATEFILE" +%Y%m%d)" -lt "$(date -d "$enddate" +%Y%m%d)" ]; 
+	do
+find_appointments
+  DATEFILE=$(date -I -d "$DATEFILE + 1 day")
+done
+}
+
+
+
 
 show_help() {
 cat <<'HelpText123'

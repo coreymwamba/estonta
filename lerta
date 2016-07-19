@@ -2,14 +2,15 @@
 # lerta - appointment listing script
 # Corey Mwamba, 2016
 source $HOME/.config/estonta.conf
-
-if [[ ! -s $eventpath ]]; then
-mkdir -p $eventpath
-echo "New directory created at $eventpath."
-exit 0
-fi
-
-
+generate_fields(){
+	while read line
+	do
+		IFS=':' read -r calname string <<< "$line"
+		[[ $calname != "UID" ]] && printf -v $calname "$string";
+	done < $LERTA
+	#iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
+	DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'|sed -e 's/.\{16\}/&:/')
+}
 find_appointments(){
 		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 needle="$(date -d "$DATEFILE" -Idate)"
@@ -21,29 +22,21 @@ done
 list_appointment(){
 		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 	tail -n +5 $found > $LERTA
-	while read g
-	do
-		IFS=':' read -r calname string <<< "$g"
-				printf -v $calname "$string"
-	done < $LERTA
+generate_fields
 		echo -e "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
 		echo -e "$LOCATION"
 		fulltext=${DESCRIPTION//\n\n/\\n\\n}
 		fulltext=${fulltext//(\\n)/\\n\\n}
 		echo -e ${fulltext%\n}
-	
 }
+
 list_all(){
 	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 for file in $eventpath/*.ics;
 do
 	tail -n +5 $file > $LERTA
-	while read line
-	do
-		IFS=':' read -r calname string <<< "$line"
-		printf -v $calname "$string"
-	done < $LERTA
-	echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY";
+generate_fields
+	echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
 done
 }
 
@@ -52,11 +45,7 @@ list_by_cat(){
 for file in $eventpath/*.ics;
 do
 	tail -n +5 $file > $LERTA
-	while read line
-	do
-		IFS=':' read -r calname string <<< "$line"
-		printf -v $calname "$string"
-	done < $LERTA
+generate_fields
 	if [ $CATEGORIES == $FILTER ];
 	then
 		echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY";
@@ -136,6 +125,10 @@ if [ -n $DATEFILE ];
 fi
 ;;
 *)
+if [[ ! -s $eventpath ]]; then
+mkdir -p $eventpath
+echo "New directory created at $eventpath."
+fi
 list_all
 exit 0
 ;;

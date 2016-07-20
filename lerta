@@ -82,6 +82,8 @@ lerta: list events.
 	-d,--date=DATE_STRING	Find events matching the date string.
 				DATE_STRING is a any value accepted by	
 				date(1) function.
+				
+	-r START_DATE_STRING END_DATE_STRING	Find events within a date range.
 	
 	-h,-?,--help	Show this help.
 HelpText123

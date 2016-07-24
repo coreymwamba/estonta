@@ -145,10 +145,9 @@ fi
 ;;
 
 -r)
+shift
 startdate=$1
-shift
 enddate=$2
-shift
 date_range
 exit 0
 ;;

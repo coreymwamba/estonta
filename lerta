@@ -2,16 +2,25 @@
 # lerta - appointment listing script
 # Corey Mwamba, 2016
 source $HOME/.config/estonta.conf
+# better parsing of the iCal file thanks to http://stackoverflow.com/a/8574392
+containsElement(){
+  local e
+    for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+      return 1
+      }
 generate_fields(){
-	while read line
-	do
-		IFS=':' read -r calname string <<< "$line"
-		[[ $calname != "UID" ]] && printf -v $calname "$string";
-	done < $LERTA
-	#iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
-	DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'|sed -e 's/.\{16\}/&:/')
-    THEDATE=$(date -d $DTSTART +"$DATEFORMAT")
+        icalarray=("DTSTART" "DTEND" "SUMMARY" "LOCATION" "DESCRIPTION" "CATEGORIES")
+        while read line
+        do
+                IFS=':' read -r calname string <<< "$line"
+                containsElement "${calname}" "${icalarray[@]}"
+                [[ $? == 0 ]] && printf -v $calname "$string";
+        done < $LERTA
+        #iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
+        DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'|sed -e 's/$
+        THEDATE=$(date -d $DTSTART +"$DATEFORMAT")
 }
+
 find_appointments(){
 	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 needle="$(date -d "$DATEFILE" -Idate)"

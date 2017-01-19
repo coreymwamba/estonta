@@ -15,6 +15,12 @@ lerta displays a list of events in the directory. You can filter them by categor
 
 ## Installation
 
+If you use Arch Linux, you can install it from the AUR:
+
+https://aur.archlinux.org/packages/estonta-git/
+
+otherwise, 
+
 ```
 sudo install -p -D aldonos -m 0755 /usr/local/bin/aldonos
 sudo install -p -D lerta -m 0755 /usr/local/bin/lerta

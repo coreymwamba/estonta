@@ -116,8 +116,11 @@ In a Conky file, something like
 ```
 {execi 10 lerta}
 ```
+## Sharing
+estonta produces iCalendar (.ics) files, so you can share them with any application or device that can read that file type. If you have Dropbox (or another file sync service), you can set the events directory to be created in there, making it handy for sharing events across different laptops and phones.
+
 ## Why?
-I got sick of not having a straightforward, transparent way of making events on my laptop. By transparent I mean making an event that I can then send to something else (like a phone; or my site) without a conversion step or a binary program. I also needed something that would give me a plain list of events that I could use in Conky. I didn't want anything big, like a full calendaring application; just something I could look at quickly, and also add to if needed.
+I got sick of not having a straightforward, transparent way of making events on my laptop. By transparent I mean making an event that I can then send to something else (like a phone; or my site) without a conversion step or a binary program. I also needed something that would give me a plain list of events that I could use in Conky. I didn't want anything big, like a full calendaring application; just something I could look at quickly, and also add to if needed. 
 
 The names are Esperanto.
 

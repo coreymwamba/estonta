@@ -79,6 +79,13 @@ The **-c** switch filters events by category.
 lerta -c "study"
 19 Jul '16 @ 15:00 - Thermodynamics tutorial
 ```
+The **-s** switch allows you to search for events where the summary contains a certain word. It's case sensitive.
+```
+lerta -s M3C
+Tue 27 Sep, 10:00am - M3C Induction
+Wed 28 Sep, 10:00am - M3C induction
+```
+
 You can find events within a date range with **lerta -r "startdate" "enddate"**. 
 
 ```
@@ -100,6 +107,8 @@ $ next7days
 Thu 28 Jul, 1:00pm - Bob
 Fri 29 Jul, 1:00pm - Laptop
 ```
+
+
 You can edit and delete events by editing the ics files. You can also add events from other software by exporting them into the configured directory.
 
 ### with Conky

@@ -1,5 +1,5 @@
 # estonta
-A simple Bash and [Yad](https://sourceforge.net/projects/yad-dialog/)-based appointment system.
+A simple Bash-based calendar application. It also has an optional [Yad](https://sourceforge.net/projects/yad-dialog/)-based interface for entering events.
 
 It has two scripts: **aldonos** (add an event, in a terminal or using Yad) and **lerta** (list events).
 

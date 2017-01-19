@@ -11,7 +11,7 @@ It has two scripts: **aldonos** (add an event, in a terminal or using Yad) and *
 aldonos produces iCalendar files in a directory (set in $HOME/.config/estonta.conf).
 
 ## lerta
-lerta displays a list of events in the directory. You can filter them by category; or find an event by date. It's VERY basic.
+lerta displays a list of events in the directory. You can filter them by category; search event summaries by word; or find an event by date. It's VERY basic.
 
 ## Installation
 

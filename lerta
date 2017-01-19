@@ -44,16 +44,15 @@ done
 }
 
 list_appointment(){
-		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 	tail -n +5 $found > $LERTA
-generate_fields
-		echo -e "$THEDATE - $SUMMARY"
-[[ -z "$SHORTNESS" ]] && echo -e "$LOCATION"
-		fulltext=${DESCRIPTION//\n\n/\\n\\n}
-		fulltext=${fulltext//(\\n)/\\n\\n}
-[[ -z "$SHORTNESS" ]] && echo -e ${fulltext%\n}
+	generate_fields
+	echo -e "$THEDATE - $SUMMARY"
+	echo -e "$LOCATION"
+	text=$(cat $LERTA )
+	fulltext=$(echo $text | sed -r 's/(\\n\s)//g' | sed -r 's/((.*)DESCRIPTION:)((.|\n)*)(END:VEVENT(.*))/\3/g' | sed -r 's/\\n/\n/g' | sed -r 's/(\\)//g')
+	[[ -z "$SHORTNESS" ]] && echo $fulltext
 }
-
 list_all(){
 	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 for file in $eventpath/*.ics;

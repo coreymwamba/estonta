@@ -77,6 +77,16 @@ generate_fields
 done	
 	
 }
+list_by_text(){
+		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+for file in $eventpath/*.ics;
+do
+	tail -n +5 $file > $LERTA
+generate_fields
+	[[ $SUMMARY =~ ${FILTER} ]] && echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
+done	
+	
+}
 
 show_help() {
 cat <<'HelpText123'
@@ -87,11 +97,12 @@ lerta: list events.
 				to change the directory.
 	
 	-c --category=TEXT	List all saved events filtered by category.
+	-s --summary=TEXT	List all saved events filtered by summary.
 	
 	-d,--date=DATE_STRING	Find events matching the date string.
 				DATE_STRING is a any value accepted by	
 				date(1) function.
-				
+	
 	-r START_DATE_STRING END_DATE_STRING	Find events within a date range.
 	
 	-h,-?,--help	Show this help.
@@ -128,6 +139,29 @@ if [ -n $FILTER ];
 		exit 1
 fi
 ;;
+-s)
+if [ -n "$2" ];
+	then
+		FILTER=$2
+		shift
+		list_by_text
+		exit 0
+	else
+		printf 'ERROR: no text entered.\n' >&2
+		exit 1
+fi
+;;
+--summary=?*)
+FILTER=${1#*=}
+if [ -n $FILTER ]; 
+	then
+		list_by_text
+		exit 0
+	else
+		printf 'ERROR: no text entered.\n' >&2
+		exit 1
+fi
+;;
 -d)
 if [ -n "$2" ];
 	then
@@ -158,6 +192,7 @@ shift
 startdate=$1
 enddate=$2
 date_range
+echo $1
 exit 0
 ;;
 

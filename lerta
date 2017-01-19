@@ -17,7 +17,7 @@ generate_fields(){
                 [[ $? == 0 ]] && printf -v $calname "$string";
         done < $LERTA
         #iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
-        DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'|sed -e 's/$
+        DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'| sed -e 's/.\{16\}/&:/')
         THEDATE=$(date -d $DTSTART +"$DATEFORMAT")
 }
 

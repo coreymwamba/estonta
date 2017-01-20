@@ -1,6 +1,6 @@
 #! /bin/bash
 # lerta - appointment listing script
-# Corey Mwamba, 2016
+# Corey Mwamba, 2016,2017
 source $HOME/.config/estonta.conf
 # better parsing of the iCal file thanks to http://stackoverflow.com/a/8574392
 containsElement(){
@@ -9,35 +9,36 @@ containsElement(){
       return 1
       }
 generate_fields(){
-        icalarray=("DTSTART" "DTEND" "SUMMARY" "LOCATION" "DESCRIPTION" "CATEGORIES")
-        while read line
-        do
-                IFS=':' read -r calname string <<< "$line"
-                containsElement "${calname}" "${icalarray[@]}"
-                [[ $? == 0 ]] && printf -v $calname "$string";
-        done < $LERTA
-        #iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
-        DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'| sed -e 's/.\{16\}/&:/')
-        THEDATE=$(date -d $DTSTART +"$DATEFORMAT")
+	icalarray=("DTSTART" "DTEND" "SUMMARY" "LOCATION" "DESCRIPTION" "CATEGORIES")
+	while read line
+	do
+		IFS=':' read -r calname string <<< "$line"
+		containsElement "${calname}" "${icalarray[@]}"
+		[[ $? == 0 ]] && printf -v $calname "$string";
+	done < $LERTA
+	#iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
+	DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'|sed -e 's/.\{16\}/&:/')
+    THEDATE=$(date -d $DTSTART +"$DATEFORMAT")
 }
-
 find_appointments(){
 	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
-needle="$(date -d "$DATEFILE" -Idate)"
+needle="$(date -I -d "$DATEFILE")"
+
 for found in $(grep -lr --include '*.ics' $needle $eventpath);
 do
+
 list_appointment
 done
 }
 
 date_range(){
 	# SO - http://stackoverflow.com/questions/28226229/bash-looping-through-dates
-startdate=$(date -I -d "$startdate") ||  exit -1 
-enddate=$(date -I -d "$enddate")   || exit -1 
+startdate=$(date -I -d "$startdate") || exit -1 
+enddate=$(date -I -d "$enddate") || exit -1 
 DATEFILE="$startdate"
-while [ "$(date -d "$DATEFILE" +%Y%m%d)" -lt "$(date -d "$enddate" +%Y%m%d)" ]; 
+
+while [ "$(date -d "$DATEFILE" +%Y%m%d)" -le "$(date -d "$enddate" +%Y%m%d)" ]; 
 	do
-	short="1"
 find_appointments
   DATEFILE=$(date -I -d "$DATEFILE + 1 day")
 done
@@ -49,10 +50,11 @@ list_appointment(){
 	generate_fields
 	echo -e "$THEDATE - $SUMMARY"
 	echo -e "$LOCATION"
-	text=$(cat $LERTA )
+	text=$(cat $LERTA)
 	fulltext=$(echo $text | sed -r 's/(\\n\s)//g' | sed -r 's/((.*)DESCRIPTION:)((.|\n)*)(END:VEVENT(.*))/\3/g' | sed -r 's/\\n/\n/g' | sed -r 's/(\\)//g')
 	[[ -z "$SHORTNESS" ]] && echo $fulltext
 }
+
 list_all(){
 	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 for file in $eventpath/*.ics;
@@ -62,6 +64,18 @@ generate_fields
 	echo "$(date -d $DTSTART +"$DATEFORMAT") - $SUMMARY"
 done
 }
+
+tagordo(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+for file in $eventpath/*.ics;
+do
+	tail -n +5 $file > $LERTA
+	generate_fields
+	echo "$(date -d $DTSTART +"%Y-%m-%d") $SUMMARY ($(date -d $DTSTART +"%-l:%M%P"))"
+done
+}
+
+
 
 list_by_cat(){
 		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
@@ -76,6 +90,7 @@ generate_fields
 done	
 	
 }
+
 list_by_text(){
 		[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 for file in $eventpath/*.ics;
@@ -193,6 +208,12 @@ enddate=$2
 date_range
 echo $1
 exit 0
+;;
+
+-g)
+tmpfile=$(mktemp)
+tagordo > $tmpfile
+dtd=$(yad --title="kalendaro" --calendar --date-format="%Y-%m-%d" --details=$tmpfile --no-buttons) 
 ;;
 
 *)

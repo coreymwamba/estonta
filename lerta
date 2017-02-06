@@ -206,7 +206,6 @@ shift
 startdate=$1
 enddate=$2
 date_range
-echo $1
 exit 0
 ;;
 

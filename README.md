@@ -2,7 +2,7 @@
 A simple Bash-based calendar application. It also has an optional [Yad](https://sourceforge.net/projects/yad-dialog/)-based interface for entering events.
 
 
-![clockwise, from top-left: listing (in Termite), the same listing in Conky, estonta.conf, adding an event](estonta-new-demo.png)
+![clockwise, from top-left: listing (in Termite), the same listing in Conky, estonta.conf, adding an event](estonta.png)
 
 
 estonta creates iCalendar files in a directory (which you can set in $HOME/.config/estonta.conf). It can also display a list of those events. You can filter them by category; search event summaries by word; or find an event by date.

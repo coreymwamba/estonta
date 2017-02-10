@@ -16,7 +16,7 @@ https://aur.archlinux.org/packages/estonta-git/
 otherwise, 
 
 ```
-sudo install -p -D estonta -m 0755 /usr/local/bin/aldonos
+sudo install -p -D estonta -m 0755 /usr/local/bin/estonta
 install -p -D estonta.conf -m 0644 $HOME/.config/estonta.conf
 ```
 

@@ -1,0 +1,362 @@
+#! /bin/bash
+# estonta - function file
+LERTA=$(mktemp)
+source $HOME/.config/estonta.conf
+# better parsing of the iCal file thanks to http://stackoverflow.com/a/8574392
+containsElement(){
+  local e
+  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+  }
+
+initialise(){
+if [[ ! -s $eventpath ]]; then
+mkdir -p $eventpath
+echo "New directory created at $eventpath."
+fi
+list_all
+}    
+   
+generate_fields(){
+    icalarray=("DTSTART" "SUMMARY" "LOCATION" "DESCRIPTION" "CATEGORIES")
+	while read line
+	do
+		IFS=':' read -r calname string <<< "$line"
+		containsElement "${calname}" "${icalarray[@]}"
+		[[ $? -eq 0 ]] && printf -v ${calname} "$string";
+	done < $LERTA
+	#iCalendar date format -> something that `date` can read. Sure there is an easier way, but I don't know it
+	DTSTART=$(echo ${DTSTART%Z} | sed -e 's/.\{4\}/&-/'|sed -e 's/.\{7\}/&-/'|sed -e 's/.\{13\}/&:/'|sed -e 's/.\{16\}/&:/')
+    THEDATE=$(date -d $DTSTART +"$DATEFORMAT")
+    #possibly inefficient, but bulletproof
+    desc=$(cat $LERTA | grep -v "DTSTART" | grep -v "CATEGORIES" | grep -v "SUMMARY" | grep -v "END" | grep -v "LOCATION" | grep -v "DTEND" | sed -r 's/\\n/\n/g' | sed -r 's/(\\)//g')
+	desc=${desc/DESCRIPTION:/}
+	startdate=$THEDATE
+    title=$SUMMARY
+    location=$LOCATION
+    category=$CATEGORIES
+    source $HOME/.config/estonta.conf
+}
+
+
+find_appointments(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	needle="$(date -I -d "$DATEFILE")"
+	for found in $(grep -lr --include '*.ics' $needle $eventpath);
+	do
+	list_appointment
+	done
+}
+
+date_range(){
+	# SO - http://stackoverflow.com/questions/28226229/bash-looping-through-dates
+	sdr=$(date -I -d "$sdr") || exit -1 
+	edr=$(date -I -d "$edr") || exit -1 
+	DATEFILE="$sdr"
+	while [ "$(date -d "$DATEFILE" +%Y%m%d)" -le "$(date -d "$edr" +%Y%m%d)" ]; 
+	do
+	find_appointments
+	DATEFILE=$(date -I -d "$DATEFILE + 1 day")
+	done
+}
+
+list_appointment(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	tail -n +7 $found > $LERTA
+	generate_fields
+	if [[ -n "${FULL+set}" ]]; then
+	echo -e "$FULL"
+	else
+	echo -e "$TERSE"
+	fi
+}
+
+list_all(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	for file in $eventpath/*.ics;
+	do
+    tail -n +7 $file > $LERTA
+	generate_fields
+	echo -e "$TERSE" 
+	done
+}
+
+
+tagordo(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	for file in $eventpath/*.ics;
+	do
+	tail -n +7 $file > $LERTA
+	generate_fields
+	echo "$(date -d $DTSTART +"%Y-%m-%d") $SUMMARY ($(date -d $DTSTART +"%-l:%M%P"))"
+	done
+}
+
+
+
+list_by_cat(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	for file in $eventpath/*.ics;
+	do
+	tail -n +7 $file > $LERTA
+	generate_fields
+	if [ $CATEGORIES == $FILTER ];
+	then
+		echo "$TERSE";
+	fi
+	done	
+	
+}
+
+list_by_text(){
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	for file in $eventpath/*.ics;
+	do
+	tail -n +5 $file > $LERTA
+	generate_fields
+	[[ $SUMMARY =~ ${FILTER} ]] && echo "$TERSE"
+	done	
+}
+
+join_strings() { 
+	 local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}";
+	}
+
+shell_generate_ical(){
+	newfile="$eventpath/$(date -Iminutes -d "$sdt" | tr -d ':').ics"
+	# simple anti-clash mechanism
+	if [ -f $newfile ]
+	then 
+		echo "You have something on this day at that time already..."
+		estonta
+		exit 1
+	fi
+	touch $newfile
+}
+yad_generate_ical(){
+	newfile="$eventpath/$(date -Iminutes -d "$sdt" | tr -d ':').ics"
+	# simple anti-clash mechanism
+	if [ -f $newfile ]
+	then 
+		uhoh=$(yad --text="You have something on this day at that time already...")
+		exit 1
+	fi
+	touch $newfile
+}
+
+populate_ical() {
+vcst="BEGIN:VCALENDAR"
+vcv="VERSION:2.0"
+vcp="PRODID:-//Estonta/ical//NONSGML v1.0//EN"
+vcuid="UID:$(date -Iminutes -d "$sdt" | tr -d ':')@$(hostname)"
+dtstamp="DTSTAMP:$(date +"%Y%m%dT%H%M%SZ")"
+vevst="BEGIN:VEVENT"
+veven="END:VEVENT"
+echo $vcst >> $newfile
+echo $vcv >> $newfile
+echo $vcp >> $newfile
+echo $vevst >> $newfile
+echo $vcuid >> $newfile
+echo $dtstamp >> $newfile
+echo "DTSTART:$dtstart" >> $newfile
+[[ -n "$location" ]] && echo "LOCATION:${location}" >> $newfile
+[[ -n "$summary" ]] && echo "SUMMARY:$summary" >> $newfile
+[[ -n "$category" ]] && echo "CATEGORIES:$category" >> $newfile
+[[ -n "$desc" ]] && echo "DESCRIPTION:$desc" |tr '\n' '\t'| awk '{gsub(/\,/,"\\,",$0)} {gsub(/\;/, "\\;",$0)} {gsub(/\t/,"\\n",$0) } {print $0}' | fold -b -s -w 75  >> $newfile
+echo -e $veven >> $newfile
+echo "END:VCALENDAR" >> $newfile
+}
+
+
+gui_add_event() {
+tmpfile=$(mktemp)
+tagordo > $tmpfile
+dtd=$(yad --title="start date" --text="When is it?" --calendar --date-format="%Y-%m-%d" --details=$tmpfile) || exit 1
+[[ -z "$dtd" ]] && exit 0
+dtt=$(yad --title="start time" --text="enter the start time" --entry ) || exit 1
+sdt="$dtd $dtt"
+dtstart=$(date -d "$sdt" +"%Y%m%dT%H%M%SZ")
+loc=$(yad --title="location" --text="where is it?" --form --field="Name" --field="Address" --field="City" --field="Postcode" --field="Country") || exit 1
+loc_array=()
+place=$(echo $loc | awk -F '|' '{print $1}')
+[[ -n "$place" ]] && loc_array+=( "$place" )
+street=$(echo $loc | awk -F '|' '{print $2}')
+[[ -n "$street" ]] && loc_array+=( "$street" )
+city=$(echo $loc | awk -F '|' '{print $3}')
+[[ -z "$city" ]] && city=$HOMETOWN
+[[ -n "$city" ]] && loc_array+=( "$city" )
+postc=$(echo $loc | awk -F '|' '{print $4}')
+[[ -n "$postc" ]] && loc_array+=( "$postc" )
+country=$(echo $loc | awk -F '|' '{print $5}')
+[[ -z "$country" ]] && country=$HOMECOUNTRY
+[[ -n "$country" ]] && loc_array+=( "$country" )
+location=$(printf "%s\, " "${loc_array[@]}" | sed -e 's/\(.*\)\\,/\1/')
+group="--field tag?:CBE"
+title="--field title"
+gp=$(join_strings '!' ${TAGS[@]})
+main=$(yad --form $group $title $gp) || exit 1
+summary=$(echo $main | awk -F '|' '{print $2}')
+category=$(echo $main | awk -F '|' '{print $1}')
+desc=$(yad --text="Write a description or more information" --text-info --editable --wrap) || exit 1
+yad_generate_ical
+populate_ical
+thanks=$(yad --text="Event saved")
+}
+
+text_add_event(){
+echo "What date is the event (date: use DATESTRING format - no commas!)? "
+read dat
+dtd=$(date -d "$dat" +"%Y-%m-%d")
+echo "Enter the start time: "
+read dtt
+sdt="$dtd $dtt"
+dtstart=$(date -d "$sdt" +"%Y%m%dT%H%M%SZ")
+echo "Where is it (press Enter to skip)?"
+read location
+location=${location//,/\,}
+echo "Please give the event a title (press Enter to skip):"
+read summary
+echo "any tags (press Enter to skip)?"
+read category
+tags=${category//,/\,}
+echo "Write a short description (press Enter to skip): "
+read desc
+shell_generate_ical
+populate_ical
+echo "Event saved."
+}
+
+show_help() {
+	# add: -ag for gui, -a for console
+    # list: -lg for calendar, -l (or empty) for text, -d for date, -r for range, -s for summary search
+cat <<'HelpText123'
+estonta: calendaring script. 
+	no switches			Terse list of events in console; 
+						OR (if run for first time) create directory to save events. 
+						Edit ~/.config/estonta.conf to change the directory.
+	-g					Graphical calendar display of events (can also add events). 					
+	-a					Add event in console.
+	-ag					Add event using a graphical dialog interface.
+	-c --category=TEXT	List all saved events filtered by category.
+	-s --summary=TEXT	List all saved events filtered by summary.
+	-d,--date=DATE_STRING	Find events matching the date string.
+							DATE_STRING is a any value accepted by	
+							date(1) function.
+	
+	-r START_DATE_STRING END_DATE_STRING	Find events within a date range.
+	
+	-h,-?,--help	Show this help.
+HelpText123
+}
+
+case $1 in
+-h|-\?|--help)
+show_help
+exit 0
+;;
+
+-a)
+text_add_event
+exit 0
+;;
+
+-ag)
+gui_add_event
+;;
+
+-c)
+if [ -n "$2" ];
+	then
+		FILTER=$2
+		shift
+		list_by_cat
+		exit 0
+	else
+		printf 'ERROR: you need to enter a category.\n' >&2
+		exit 1
+fi
+;;
+--category=?*)
+FILTER=${1#*=}
+if [ -n $FILTER ]; 
+	then
+		list_by_cat
+		exit 0
+	else
+		printf 'ERROR:  you need to enter a category.\n' >&2
+		exit 1
+fi
+;;
+-s)
+if [ -n "$2" ];
+	then
+		FILTER=$2
+		shift
+		list_by_text
+		exit 0
+	else
+		printf 'ERROR: no text entered.\n' >&2
+		exit 1
+fi
+;;
+--summary=?*)
+FILTER=${1#*=}
+if [ -n $FILTER ]; 
+	then
+		list_by_text
+		exit 0
+	else
+		printf 'ERROR: no text entered.\n' >&2
+		exit 1
+fi
+;;
+-d)
+if [ -n "$2" ];
+	then
+		DATEFILE=$2
+		shift
+		find_appointments
+		exit 0
+	else
+		printf 'ERROR: you need to enter a date string.\n' >&2
+		exit 1
+fi
+;;
+
+--date=?*)
+DATEFILE=${1#*=}
+if [ -n $DATEFILE ]; 
+	then
+		find_appointments
+		exit 0
+	else
+		printf 'ERROR: you need to enter a date string.\n' >&2
+		exit 1
+fi
+;;
+
+-r)
+shift
+sdr=$1
+edr=$2
+date_range
+exit 0
+;;
+
+-g)
+tmpfile=$(mktemp)
+tagordo > $tmpfile
+gui_add_event
+;;
+
+*)
+if [[ ! -s $eventpath ]]; then
+mkdir -p $eventpath
+echo "New directory created at $eventpath."
+fi
+list_all
+exit 0
+;;
+esac
+unset
+rm $LERTA

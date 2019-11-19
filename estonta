@@ -76,6 +76,7 @@ list_appointment(){
 }
 
 list_all(){
+initialise
 	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
 	for file in $eventpath/*.ics;
 	do
@@ -173,6 +174,7 @@ echo "END:VCALENDAR" >> $newfile
 
 
 gui_add_event() {
+gui_initialise
 tmpfile=$(mktemp)
 tagordo > $tmpfile
 dtd=$(yad --title="start date" --text="When is it?" --calendar --date-format="%Y-%m-%d" --details=$tmpfile) || exit 1
@@ -208,6 +210,7 @@ thanks=$(yad --text="Event saved")
 }
 
 text_add_event(){
+initialise
 echo "What date is the event (date: use DATESTRING format - no commas!)? "
 read dat
 dtd=$(date -d "$dat" +"%Y-%m-%d")
@@ -260,13 +263,11 @@ exit 0
 ;;
 
 -a)
-initialise
 text_add_event
 exit 0
 ;;
 
 -ag)
-gui_initialise
 gui_add_event
 ;;
 
@@ -356,7 +357,6 @@ gui_add_event
 ;;
 
 *)
-initialise
 list_all
 exit 0
 ;;

@@ -266,7 +266,7 @@ exit 0
 ;;
 
 -ag)
-initialise
+gui_initialise
 gui_add_event
 ;;
 

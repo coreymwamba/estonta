@@ -14,9 +14,13 @@ if [[ ! -s $eventpath ]]; then
 mkdir -p $eventpath
 echo "New directory created at $eventpath."
 fi
-list_all
 }    
-   
+gui_initialise(){
+if [[ ! -s $eventpath ]]; then
+mkdir -p $eventpath
+ting=$(yad --text="New directory created at $eventpath.")
+fi
+}    
 generate_fields(){
     icalarray=("DTSTART" "SUMMARY" "LOCATION" "DESCRIPTION" "CATEGORIES")
 	while read line
@@ -256,11 +260,13 @@ exit 0
 ;;
 
 -a)
+initialise
 text_add_event
 exit 0
 ;;
 
 -ag)
+initialise
 gui_add_event
 ;;
 
@@ -350,10 +356,7 @@ gui_add_event
 ;;
 
 *)
-if [[ ! -s $eventpath ]]; then
-mkdir -p $eventpath
-echo "New directory created at $eventpath."
-fi
+initialise
 list_all
 exit 0
 ;;

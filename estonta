@@ -88,7 +88,7 @@ initialise
 
 
 tagordo(){
-	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; exit 1; }
+	[[ ! -z "$(ls -A $eventpath)" ]] || { echo "No events found"; return 1; }
 	for file in $eventpath/*.ics;
 	do
 	tail -n +7 $file > $LERTA
@@ -174,7 +174,7 @@ echo "END:VCALENDAR" >> $newfile
 
 
 gui_add_event() {
-gui_initialise
+[[ ! -s $eventpath ]] && { mkdir -p $eventpath; yad --text="Events directory created at $eventpath"; }
 tmpfile=$(mktemp)
 tagordo > $tmpfile
 dtd=$(yad --title="start date" --text="When is it?" --calendar --date-format="%Y-%m-%d" --details=$tmpfile) || exit 1
